@@ -256,6 +256,11 @@ header button{
 	max-width: 100%;
 }
 
+#footerlinks ul li a p{
+    font-size: smaller;
+    color: var(--backgroundcolor);
+}
+
 @media only screen and (max-width: 700px)
 {
 	header button{
