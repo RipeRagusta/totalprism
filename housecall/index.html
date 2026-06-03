@@ -2424,13 +2424,13 @@
                 {
                     this.card1 = this.getRandomCardId();
                 }
-                while(this.gameManager.ownedCards.has(this.card1))
+                while(this.gameManager.ownedCards.has(this.card1) || (this.gameManager.multiAmmoUpgrade === true && this.gameManager.ammoUpgrades.has(this.card1) && this.gameManager.gameMode !== "Classic"))
 
                 do
                 {
                     this.card2 = this.getRandomCardId();
                 }
-                while(this.card2 === this.card1 || this.gameManager.ownedCards.has(this.card2) || (this.gameManager.ammoUpgrades.has(this.card1) && this.gameManager.ammoUpgrades.has(this.card2)))
+                while(this.card2 === this.card1 || this.gameManager.ownedCards.has(this.card2) || (this.gameManager.ammoUpgrades.has(this.card1) && this.gameManager.ammoUpgrades.has(this.card2))|| (this.gameManager.multiAmmoUpgrade === true && this.gameManager.ammoUpgrades.has(this.card2) && this.gameManager.gameMode !== "Classic"))
 
                 this.cardDisplay1 = this.displayCard(this.card1, "left");
                 this.cardDisplay1.on("pointerdown", () =>
@@ -2518,10 +2518,49 @@
                 this.gameManager.ownedCards.add(id); 
                 transitionLevels(this, this.gameManager);
             }
-
+cou
             getRandomCardId()
             {
                 return Math.floor(Math.random() * (this.cardAmount - 1 + 1)) + 1;
+            }
+            
+            getNewAmmoStatFromCurrent(card)
+            {     
+                let currentAmmoType = this.gameManager.fireModeConfig[this.gameManager.fireModeUpgrade];
+                
+                let selectedAmmoType = this.gameManager.fireModeConfig[Object.keys(this.upgradeCardData).find(key => this.upgradeCardData[key] === card)];
+                
+                let damageDiff = (Math.round(selectedAmmoType.damage * 100) - Math.round(currentAmmoType.damage * 100)) / 100;
+                let projectileDiff = (Math.round(selectedAmmoType.pelletCount * 100) - Math.round(currentAmmoType.pelletCount * 100)) / 100;
+                let spreadDiff = (Math.round(selectedAmmoType.spread * 100) - Math.round(currentAmmoType.spread * 100)) / 100;
+                let penetrationDiff = (Math.round(selectedAmmoType.penetrations * 100) - Math.round(currentAmmoType.penetrations * 100)) / 100;
+                
+                function normalize(value)
+                {
+                    if(value > 0)
+                    {
+                        return "+" + value;
+                    }
+                    else if(value === 0)
+                    {
+                        return "same";
+                    }
+                    else
+                    {
+                        return "" + value;
+                    }
+                }
+                
+                let spreadDisplayText = normalize(spreadDiff) + "°";
+                
+                if(card.name === "Slugs")
+                {
+                    spreadDisplayText = "none";
+                }
+                
+                return "Damage: " + normalize(damageDiff) + ", Projectiles: " + normalize(projectileDiff) + ", Spread: " + spreadDisplayText + ", Penetrations: " + normalize(penetrationDiff);
+                
+                
             }
 
             displayCard(id, position)
@@ -2544,7 +2583,15 @@
 
                 const cardContainer = this.add.container(xPos, yCenter);
                 titleText = createText(this, 0, -50, card.name, 20, "#f00").setOrigin(0.5, 1);
-                descriptionText = createText(this, 0, 50, card.description, 12, "#f00").setOrigin(0.5, 0);
+                
+                if(card.ammo === true && this.gameManager.gameMode !== "Classic")
+                {
+                    descriptionText = createText(this, 0, 50, this.getNewAmmoStatFromCurrent(card), 10, "#f00").setOrigin(0.5, 0);
+                }
+                else
+                {
+                    descriptionText = createText(this, 0, 50, card.description, 10, "#f00").setOrigin(0.5, 0);
+                }
                 descriptionText.setStyle
                 ({
                     wordWrap: { width: this.sys.game.config.width / 2 - 10, use:"true" }
@@ -2599,9 +2646,10 @@
                             this.clearAmmoOwned();
                             gameManager.multiAmmoUpgrade = false;
                             gameManager.fireModeUpgrade = "birdshot";
-                        }
+                        },
+                        ammo: true 
                     },
-                    "slugs": 
+                    "slug": 
                     {
                         id: 2,
                         name: "Slugs",
@@ -2612,13 +2660,14 @@
                             this.clearAmmoOwned();
                             gameManager.multiAmmoUpgrade = false;
                             gameManager.fireModeUpgrade = "slug";
-                        }
+                        },
+                        ammo: true
                     },
                     "damage": 
                     {
                         id: 3,
                         name: "Gun Oil",
-                        description: "Increase shotgun damage by 25%.",
+                        description: "Shotgun Damage: +25%",
                         icon: "damageicon",
                         effect: (gameManager) => 
                         {
@@ -2629,7 +2678,7 @@
                     {
                         id: 4,
                         name: "Conditioning",
-                        description: "Survive an extra hit.",
+                        description: "Survive an extra Orb.",
                         icon: "healthicon",
                         effect: (gameManager) => 
                         {
@@ -2640,7 +2689,7 @@
                     {
                         id: 5,
                         name: "Veneration",
-                        description: "Successful kills trigger 2x fire rate.",
+                        description: "Successful kills trigger block effects.",
                         icon: "cultenergyicon",
                         effect: (gameManager) => 
                         {
@@ -2651,7 +2700,7 @@
                     {
                         id: 6,
                         name: "Hollow Points",
-                        description: "2x handgun damage.",
+                        description: "Handgun Damage: +100%",
                         icon: "hollowpointsicon",
                         effect: (gameManager) => 
                         {
@@ -2674,7 +2723,7 @@
                     {
                         id: 8,
                         name: "Panic",
-                        description: "Fire 3 handgun rounds at once. High cooldown.",
+                        description: "Handgun fires 3 consecutive times.",
                         icon: "triplepistolicon",
                         effect: (gameManager) => 
                         {
@@ -2686,7 +2735,7 @@
                     {
                         id: 9,
                         name: "Terror",
-                        description: "Fire 5 handgun rounds at once. Highest cooldown.",
+                        description: "Handgun fires 5 consecutive times.",
                         icon: "quintuplepistolicon",
                         effect: (gameManager) => 
                         {
@@ -2716,7 +2765,8 @@
                             this.clearAmmoOwned();
                             gameManager.multiAmmoUpgrade = false;
                             gameManager.fireModeUpgrade = "numfourbuckshot";
-                        }
+                        },
+                        ammo: true
                     },
                     "000buckshot": 
                     {
@@ -2729,13 +2779,14 @@
                             this.clearAmmoOwned();
                             gameManager.multiAmmoUpgrade = false;
                             gameManager.fireModeUpgrade = "000buckshot";
-                        }
+                        },
+                        ammo: true
                     },
                     "highvelocity": 
                     {
                         id: 13,
                         name: "High Velocity",
-                        description: "Shotgun projectiles penetrate an extra enemy.",
+                        description: "Shotgun Penetrations: +1",
                         icon: "shieldicon",
                         effect: (gameManager) => 
                         {
@@ -2746,7 +2797,7 @@
                     {
                         id: 14,
                         name: "Intimidation",
-                        description: "Orb throwers keep 50% more distance from player.",
+                        description: "Orb Thrower Distance: +50%",
                         icon: "moredistanceicon",
                         effect: (gameManager) => 
                         {
@@ -2758,7 +2809,7 @@
                     {
                         id: 15,
                         name: "Aggression",
-                        description: "Orb throwers keep 15% less distance from player.",
+                        description: "Orb Thrower Distance: -15%",
                         icon: "lessdistanceicon",
                         effect: (gameManager) => 
                         {
@@ -2770,7 +2821,7 @@
                     {
                         id: 16,
                         name: "Blind Rage",
-                        description: "Knife wielding enemies only run forwards.",
+                        description: "Knife Wielders only run forwards.",
                         icon: "knifeaggressionicon",
                         effect: (gameManager) => 
                         {
@@ -2904,7 +2955,7 @@
                     }
                 }
                 
-                this.bloodType = "Standard";
+                this.bloodType = "Standard-Subtle";
                 
                 if(checkStorage() === true)
                 {
@@ -4083,13 +4134,53 @@
                     canPlayAudio(this) && this.sound.play("mainmenuclick", { rate: Phaser.Math.FloatBetween(0.75, 1) });
                 });
                 
-                this.changeBloodWords = this.gameManager.bloodType;
+                if(this.gameManager.bloodType === "Standard-Subtle")
+                {
+                    this.changeBloodWords = "Standard";
+                }
+                else if(this.gameManager.bloodType === "Small-Subtle")
+                {
+                    this.changeBloodWords = "Small";
+                }
+                else if(this.gameManager.bloodType === "Off")
+                {
+                    this.changeBloodWords = "Off";
+                }
+                else if(this.gameManager.bloodType === "Classic")
+                {
+                    this.changeBloodWords = "Classic";
+                }
+                else if(this.gameManager.bloodType === "Classic-V2-Subtle")
+                {
+                    this.changeBloodWords = "Classic-V2";
+                }
                 
                 this.changeBlood = createText(this, 5, 22 + this.gameSettings.height + this.gameMode.height + this.toggleHUD.height + this.toggleScreenShake.height + this.toggleCrosshairMotion.height, "Blood Style: " + this.changeBloodWords, 10, "#ff0000").setOrigin(0, 0).setDepth(1232300);
                 this.changeBlood.setInteractive({cursor: "pointer"});
                 this.changeBlood.on("pointerdown", () =>
                 {
-                    if(this.gameManager.bloodType === "Standard")
+                    if(this.gameManager.bloodType === "Standard-Subtle")
+                    {
+                        this.gameManager.bloodType = "Small-Subtle";
+                    }
+                    else if(this.gameManager.bloodType === "Small-Subtle")
+                    {
+                        this.gameManager.bloodType = "Off";
+                    }
+                    else if(this.gameManager.bloodType === "Off")
+                    {
+                        this.gameManager.bloodType = "Classic";
+                    }
+                    else if(this.gameManager.bloodType === "Classic")
+                    {
+                        this.gameManager.bloodType = "Classic-V2-Subtle";
+                    }
+                    else if(this.gameManager.bloodType === "Classic-V2-Subtle")
+                    {
+                        this.gameManager.bloodType = "Standard-Subtle";
+                    }
+                    
+                    /*if(this.gameManager.bloodType === "Standard")
                     {
                         this.gameManager.bloodType = "Standard-Subtle";
                     }
@@ -4124,7 +4215,7 @@
                     else if(this.gameManager.bloodType === "Classic-V2-Subtle")
                     {
                         this.gameManager.bloodType = "Standard";
-                    }
+                    }*/
                     
                     if(checkStorage() === true)
                     {
@@ -4179,7 +4270,26 @@
                         }
                     }
                     
-                    this.changeBloodWords = this.gameManager.bloodType;
+                    if(this.gameManager.bloodType === "Standard-Subtle")
+                    {
+                        this.changeBloodWords = "Standard";
+                    }
+                    else if(this.gameManager.bloodType === "Small-Subtle")
+                    {
+                        this.changeBloodWords = "Small";
+                    }
+                    else if(this.gameManager.bloodType === "Off")
+                    {
+                        this.changeBloodWords = "Off";
+                    }
+                    else if(this.gameManager.bloodType === "Classic")
+                    {
+                        this.changeBloodWords = "Classic";
+                    }
+                    else if(this.gameManager.bloodType === "Classic-V2-Subtle")
+                    {
+                        this.changeBloodWords = "Classic-V2";
+                    }
                     this.changeBlood.setText("Blood Style: " + this.changeBloodWords);
                     canPlayAudio(this) && this.sound.play("mainmenuclick", { rate: Phaser.Math.FloatBetween(0.75, 1) });
                 });
@@ -4221,7 +4331,7 @@
                 
                 if(this.gameManager.playerSkin === "player")
                 {
-                    this.changeSkinWords = "Default";
+                    this.changeSkinWords = "Standard";
                 }
                 else if(this.gameManager.playerSkin === "playerchromeshotgun")
                 {
@@ -4252,7 +4362,7 @@
                     
                     if(this.gameManager.playerSkin === "player")
                     {
-                        this.changeSkinWords = "Default";
+                        this.changeSkinWords = "Standard";
                     }
                     else if(this.gameManager.playerSkin === "playerchromeshotgun")
                     {

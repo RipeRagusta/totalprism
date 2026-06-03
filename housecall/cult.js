@@ -10,6 +10,10 @@ class cultOrb extends Phaser.Physics.Arcade.Sprite
 
     fire(x, y, angle)
     {
+    if(this.body) 
+    {
+        this.body.enable = true;
+    }
       this.body.reset(x, y);
       this.setActive(true);
       this.setVisible(true);
@@ -27,7 +31,7 @@ class cultOrb extends Phaser.Physics.Arcade.Sprite
       {
         this.setActive(false);
         this.setVisible(false);
-        this.destroy();
+        this.body.stop();
       }
     }
 
@@ -35,7 +39,7 @@ class cultOrb extends Phaser.Physics.Arcade.Sprite
     {
       this.setActive(false);
       this.setVisible(false);
-      this.destroy();
+      this.body.stop();
     }
   }
 
