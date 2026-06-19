@@ -964,7 +964,7 @@
                 
                 if(this.seenControls === true)
                 {
-                    this.quickStart = createText(this, this.game.config.width - (this.game.config.width / 2), 5, "QUICK START", 10, "#ffffff").setOrigin(0.5, 0).setDepth(1232300);
+                    this.quickStart = createText(this, this.game.config.width - (this.game.config.width / 2), 5, "START", 10, "#ffffff").setOrigin(0.5, 0).setDepth(1232300);
                     this.quickStart.setInteractive({cursor: "pointer"});
                     this.quickStart.on("pointerdown", () =>
                     {
@@ -2424,13 +2424,13 @@
                 {
                     this.card1 = this.getRandomCardId();
                 }
-                while(this.gameManager.ownedCards.has(this.card1) || (this.gameManager.multiAmmoUpgrade === true && this.gameManager.ammoUpgrades.has(this.card1) && this.gameManager.gameMode !== "Classic"))
+                while(this.gameManager.ownedCards.has(this.card1) || (this.gameManager.multiAmmoUpgrade === true && this.gameManager.ammoUpgrades.has(this.card1)) || (this.gameManager.quintuplePistolUpgrade === true && this.card1 === 8))
 
                 do
                 {
                     this.card2 = this.getRandomCardId();
                 }
-                while(this.card2 === this.card1 || this.gameManager.ownedCards.has(this.card2) || (this.gameManager.ammoUpgrades.has(this.card1) && this.gameManager.ammoUpgrades.has(this.card2))|| (this.gameManager.multiAmmoUpgrade === true && this.gameManager.ammoUpgrades.has(this.card2) && this.gameManager.gameMode !== "Classic"))
+                while(this.card2 === this.card1 || this.gameManager.ownedCards.has(this.card2) || (this.gameManager.quintuplePistolUpgrade === true && this.card2 === 8) || (this.gameManager.pistolConscutiveUpgradaesLOL.has(this.card1) && this.gameManager.pistolConscutiveUpgradaesLOL.has(this.card2)) ||(this.gameManager.ammoUpgrades.has(this.card1) && this.gameManager.ammoUpgrades.has(this.card2)) || (this.gameManager.multiAmmoUpgrade === true && this.gameManager.ammoUpgrades.has(this.card2)))
 
                 this.cardDisplay1 = this.displayCard(this.card1, "left");
                 this.cardDisplay1.on("pointerdown", () =>
@@ -2524,6 +2524,39 @@ cou
                 return Math.floor(Math.random() * (this.cardAmount - 1 + 1)) + 1;
             }
             
+            getNewAmmoStatFromCurrentClassicVersion(card)
+            {
+                let currentAmmoType = this.gameManager.fireModeConfig[this.gameManager.fireModeUpgrade];
+                
+                let selectedAmmoType = this.gameManager.fireModeConfig[Object.keys(this.upgradeCardData).find(key => this.upgradeCardData[key] === card)];
+                
+                let damageDiff = (Math.round(selectedAmmoType.damage * 100) - Math.round(currentAmmoType.damage * 100)) / 100;
+                let projectileDiff = (Math.round(selectedAmmoType.pelletCount * 100) - Math.round(currentAmmoType.pelletCount * 100)) / 100;
+                let spreadDiff = (Math.round(selectedAmmoType.spread * 100) - Math.round(currentAmmoType.spread * 100)) / 100;
+                
+                function normalize(value)
+                {
+                    if(value > 0)
+                    {
+                        return "+" + value;
+                    }
+                    else if(value === 0)
+                    {
+                        return "same";
+                    }
+                    else
+                    {
+                        return "" + value;
+                    }
+                }
+                
+                let spreadDisplayText = normalize(spreadDiff) + "°";
+                
+                return "Damage: " + normalize(damageDiff) + ", Projectiles: " + normalize(projectileDiff) + ", Spread: " + spreadDisplayText;
+                
+                
+            }
+            
             getNewAmmoStatFromCurrent(card)
             {     
                 let currentAmmoType = this.gameManager.fireModeConfig[this.gameManager.fireModeUpgrade];
@@ -2583,10 +2616,15 @@ cou
                 {
                     descriptionText = createText(this, 0, 50, this.getNewAmmoStatFromCurrent(card), 10, "#f00").setOrigin(0.5, 0);
                 }
+                else if(card.ammo === true)
+                {
+                    descriptionText = createText(this, 0, 50, this.getNewAmmoStatFromCurrentClassicVersion(card), 10, "#f00").setOrigin(0.5, 0);
+                }
                 else
                 {
-                    descriptionText = createText(this, 0, 50, card.description, 10, "#f00").setOrigin(0.5, 0);
+                     descriptionText = createText(this, 0, 50, card.description, 10, "#f00").setOrigin(0.5, 0);
                 }
+                
                 descriptionText.setStyle
                 ({
                     wordWrap: { width: this.sys.game.config.width / 2 - 10, use:"true" }
@@ -2695,7 +2733,7 @@ cou
                     {
                         id: 6,
                         name: "Hollow Points",
-                        description: "Handgun Damage: +100%",
+                        description: "Pistol Damage: +100%",
                         icon: "hollowpointsicon",
                         effect: (gameManager) => 
                         {
@@ -2718,7 +2756,7 @@ cou
                     {
                         id: 8,
                         name: "Panic",
-                        description: "Handgun fires 3 consecutive times.",
+                        description: "Pistol fires 3 consecutive times.",
                         icon: "triplepistolicon",
                         effect: (gameManager) => 
                         {
@@ -2730,7 +2768,7 @@ cou
                     {
                         id: 9,
                         name: "Terror",
-                        description: "Handgun fires 5 consecutive times.",
+                        description: "Pistol fires 5 consecutive times.",
                         icon: "quintuplepistolicon",
                         effect: (gameManager) => 
                         {
@@ -2742,7 +2780,7 @@ cou
                     {
                         id: 10,
                         name: "Center Mass",
-                        description: "Handgun aims with mouse.",
+                        description: "Pistol aims with mouse.",
                         icon: "mousepistolicon",
                         effect: (gameManager) => 
                         {
@@ -2828,6 +2866,8 @@ cou
                 this.extra = true;
 
                 this.ammoUpgrades = new Set([1, 2, 7, 11, 12]);
+                
+                this.pistolConscutiveUpgradaesLOL = new Set([8, 9]);
 
                 this.highestLevel = 0;
                 this.initialHighestLevel = this.highestLevel;
