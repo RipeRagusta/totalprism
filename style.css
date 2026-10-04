@@ -87,8 +87,6 @@ body{
 	font-size: 1rem;
 	background-color: var(--backgroundcolor);
 	font-family: "Space Grotesk", system-ui, sans-serif;
-	font-optical-sizing: auto;
-  	font-variation-settings: "wdth" 100;
 	min-height: 100%;
 	margin: 0px auto;
 	padding: 0px;
