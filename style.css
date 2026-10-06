@@ -154,10 +154,6 @@ nav{
 	margin-bottom: var(--sizer);
 }
 
-.imagelink p{
-	font-family: system-ui, sans-serif;
-}
-
 #footercontent{
 	width: 100%;
 	max-width: 1000px;
@@ -167,7 +163,6 @@ nav{
 	display: flex;
 	justify-content: flex-start;
     align-items: center;
-    font-family: system-ui, sans-serif;
 }
 
 a{
