@@ -57,7 +57,7 @@ class Player extends Phaser.GameObjects.Container
 {
     constructor(scene, x, y, bulletHolder) 
     {
-        const legs = scene.add.sprite(8, 12, "legsanimated", 0).setOrigin(0.5, 0.5);
+        const legs = scene.add.sprite(8, 11, "legsanimated", 0).setOrigin(0.5, 0.5);
         const torso = scene.add.sprite(10, 4, "torsoanimated").setOrigin(0.5, 0.5);
      
         super(scene, x, y, [legs, torso]);
@@ -72,14 +72,31 @@ class Player extends Phaser.GameObjects.Container
         this.legs = legs;
         this.torso = torso;
         
+        
+        this.speed = 100;
+
         this.torsoOffsets = 
         [
-            { x: 8, y: 7 },   //idle
-            { x: 10, y: 6},  //transition
-            { x: 10, y: 6},
-            { x: 11, y: 5 },
-            { x: 10, y: 4 },
+            { x: 8, y: 6 },   //idle
+            { x: 8, y: 6 },   //shootidle
+            { x: 8, y: 6 },   //blockidle
+            { x: 10, y: 5},  
+            { x: 10, y: 5},
+            { x: 11, y: 4 },
+            { x: 10, y: 3 },
         ];
+        
+        this.blockingWalkForwardOffsets =
+        [
+            { x: 8, y: 7 },   //idle
+            { x: 8, y: 7 },   //shootidle
+            { x: 8, y: 7 },   //blockidle
+            { x: 8, y: 6},  
+            { x: 8, y: 6},
+            { x: 9, y: 5 },
+            { x: 8, y: 4 },
+        ];
+ 
         
         this.lastPlayerShot = 0;
         this.fireRate = 500;
@@ -103,39 +120,78 @@ class Player extends Phaser.GameObjects.Container
             this.torso.setPosition(offset.x, offset.y);
         }
         
-        /*if(this.torsoState === "block")
+        if(this.torsoState === "block")
         {
-            this.torso.setPosition(10, 5);
-        }*/
+            if(this.legState === "idle")
+            {
+                this.torso.setPosition(6, 7);
+                
+                switch(this.torsoState)
+                {
+                    case "pump":
+                        break;
+                    case "aimforward":
+                        break;
+                    case "block":
+                        break;
+                }
+            }
+            else if(this.legState === "walkRight")
+            {
+                console.log("here");
+                const walkRightOffset = this.blockingWalkForwardOffsets[textureFrame];
+                
+                if(walkRightOffset) 
+                {
+                    this.torso.setPosition(walkRightOffset.x, walkRightOffset.y);
+                }
+            }
+        }
     }
 
     preUpdate(time, delta) 
     {
-        this.checkMovement();
-        this.setState(time);
+        this.setLegState();
+        this.executeLegState(this.legState);
+        this.setTorsoState(time);
         this.executeTorsoState(this.torsoState);
         this.torsoUpdatePositionToLegs();
     }
 
-    checkMovement() 
+    setLegState() 
     {
         const speed = 66;
 
         if(this.gameManager.isActionActive("walkLeft")) 
         {
-            this.body.setVelocityX(-speed);
-            this.legs.play("legs-walk", true);
+            this.legState = "walfLeft";
         } 
-        else if (this.gameManager.isActionActive("walkRight"))
+        else if(this.gameManager.isActionActive("walkRight"))
         {
-            
-            this.body.setVelocityX(speed);
-            this.legs.play("legs-walk", true);
+            this.legState = "walkRight";
         } 
         else 
         {
-            this.body.setVelocityX(0);
-            this.legs.play("legs-idle", true);
+            this.legState = "idle";
+        }
+    }
+    
+    executeLegState(legState)
+    {
+        switch(legState)
+        {
+            case "walkRight":
+                this.body.setVelocityX(this.speed);
+                this.legs.play("legs-walk", true);
+                break;
+            case "walkLeft":
+                this.body.setVelocityX(-this.speed);
+                this.legs.play("legs-walk", true);
+                break;
+            case "idle":
+                this.body.setVelocityX(0);
+                this.legs.play("legs-idle", true);
+                break;
         }
     }
     
@@ -157,7 +213,7 @@ class Player extends Phaser.GameObjects.Container
         }
     }
     
-    setState(time)
+    setTorsoState(time)
     {
         if(this.gameManager.isActionActive("useShotgun") && time > this.lastPlayerShot + this.fireRate)
         {
@@ -172,155 +228,11 @@ class Player extends Phaser.GameObjects.Container
         {
             this.torsoState = "block";
             return;
-        }
-        
-        
+        }        
         
         if(time > this.lastPlayerShot + this.fireRate)
         {
             this.torsoState = "aimforward";
         }
     }
-    
-    /*checkShooting(time)
-    {
-        if(this.gameManager.isActionActive("useShotgun") && time > this.lastPlayerShot + this.fireRate)
-        {
-            this.mouseRef.mouse.disableContextMenu();
-            
-            this.torsoState = "pump";
-            this.lastPlayerShot = time;
-        }
-        else if(time > this.lastPlayerShot + this.fireRate)
-        {
-            this.torsoState = "aimforward";
-        }
-    }
-    
-    shoot()
-    {
-        
-    }*/
-    
-    /*shoot()
-    {
-        const fireConfig = this.gameManager.fireModeConfig[this.fireMode];
-        
-        let offset = -(fireConfig.spread / 2);
-
-        for (let i = 0; i < fireConfig.pelletCount; i++)
-        {
-            const pelletType = this.doubleFire ? fireConfig.doublePelletType : fireConfig.normalPelletType;
-            
-            const bullet = this.bullets.get(this.x, this.y, pelletType);
-
-            if(bullet)
-            {
-                let currentPenetrations = fireConfig.penetrations;
-                
-                if(this.gameManager.highVelocityUpgrade)
-                {
-                    currentPenetrations += 1;
-                }
-                
-                let currentPenetrationReduction = fireConfig.penetrationReduction;
-                
-                this.damagePerShot = this.baseDamage * fireConfig.damage;
-                
-                if(this.flip === false)
-                {
-                  bullet.fire(this.x + 8, this.y - 2, this.aimAngle + Phaser.Math.DegToRad(offset), this.damagePerShot, fireConfig.pelletVelocity, currentPenetrations, currentPenetrationReduction, this.doubleFire ? "doubleFire" : "shotgun");
-                }
-                else
-                {
-                  bullet.fire(this.x - 8, this.y - 1, this.aimAngle + Phaser.Math.DegToRad(offset), this.damagePerShot, fireConfig.pelletVelocity, currentPenetrations, currentPenetrationReduction, this.doubleFire ? "doubleFire" : "shotgun");
-                }
-
-                offset += fireConfig.spreadIncrement;
-            }
-        }
-        
-        if(!this.firedFirstShot)
-        {
-            this.scene.sound.play(fireConfig.sound);
-            this.firedFirstShot = true;
-        }
-        else
-        {
-            canPlayAudio(this.scene) && this.scene.sound.play(fireConfig.sound);
-        }
-        
-        this.shotgunEmitters[fireConfig.shellEmitter].emitParticleAt(this.x, this.y);
-    }*/
 }
-
- 
-
-/*class Player extends Phaser.Physics.Arcade.Sprite 
-{
-    constructor(scene, x, y) 
-    {
-        super(scene, x, y, null);
-        
-        this.scene = scene;
-        this.gameManager = game.scene.getScene("GameManager");
-        scene.add.existing(this);
-        scene.physics.add.existing(this);
-        this.body.setSize(16, 16);
-        this.setAlpha(0); 
-
-        this.visuals = scene.add.container(this.x, this.Y);
-        
-        this.legs = scene.add.image(0, 0 + 5, "legs");
-        this.torso = scene.add.image(0, 0 - 3, "torso");
-        
-        this.visuals.add([this.legs, this.torso]);
-        
-        this.keys = scene.input.keyboard.addKeys
-        ({
-            up: Phaser.Input.Keyboard.KeyCodes.SPACE,
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            right: Phaser.Input.Keyboard.KeyCodes.D
-        });
-    }
-    
-    updateLegs()
-    {
-        
-    }
- 
-    updateTorso()
-    {
-        
-    }
-    
-    preUpdate(time, delta)
-    {
-        super.preUpdate(time, delta);
-        this.checkMovement();
-        this.visuals.setPosition(this.x, this.y);
-    }
-   
-    checkMovement() 
-    {
-        const speed = 66;
-        
-        if(this.gameManager.isActionActive("walkLeft"))
-        {
-            this.setVelocityX(-speed);
-        }
-        else if(this.gameManager.isActionActive("walkRight"))
-        {
-            this.setVelocityX(speed);
-        }
-        else
-        {
-            this.setVelocityX(0);
-        }
-    }
-    
-    update() 
-    {
-        
-    }7
-}*/
