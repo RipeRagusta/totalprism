@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>House Call</title>
+  <meta name="description" content="2d video game">
+  <script src="./assets/phaser4.min.js"></script>
+  <link rel="shortcut icon" type="image" href="./assets/cultknifelogo.png">
+  <style type="text/css">
+    canvas{
+        /*cursor: none !important;*/
+    }
+      
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      background-color: #000000;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+    <script type="text/javascript" src="./player.js"></script>
+    <script type="text/javascript" src="./keyboardManager.js"></script>
+    <script type="text/javascript">
+        
+        class Loading extends Phaser.Scene
+        {
+            constructor()
+            {
+              super({key: "Loading"});
+            }
+
+            preload()
+            {
+                this.load.spritesheet("legsanimated", "./assets/legsanimated.png", {frameWidth: 16, frameHeight: 9});
+                this.load.spritesheet("torsoanimated", "./assets/torsoanimated.png", {frameWidth: 16, frameHeight: 13});
+                this.load.image("grass", "./assets/grass.png");
+                this.load.image("sky", "./assets/sky.png");
+                this.load.image("torso", "./assets/torso.png");
+                this.load.image("legs", "./assets/legs.png");
+                
+            }
+
+            create()
+            {
+                this.loading = this.add.text((this.sys.game.config.width / 2), this.sys.game.config.height / 2, "Loading", { fontFamily: "hcfont", fontSize: "16px", fill: "#fff" }).setOrigin(0.5);
+            }
+
+            update()
+            {
+                this.scene.start("GameManager");
+                this.scene.start("Level1");
+            }
+        }
+        
+        class GameManager extends Phaser.Scene
+        {
+            constructor()
+            {
+                super({ key: "GameManager" });
+            }
+            
+            create()
+            {
+                this.defaultActions =
+                {
+                    useShotgun: { type: "MOUSE", button: 0 },
+                    jump: { type: "KEY", code: 32 },
+                    walkLeft: { type: "KEY", code: 65 },
+                    walkRight: { type: "KEY", code: 68 },
+                    usePistol: { type: "KEY", code: 69 },
+                    block: { type: "MOUSE", button: 2 }
+                };
+                
+                this.actions = JSON.parse(JSON.stringify(this.defaultActions));
+                
+                this.refreshControls();
+                
+                
+                this.anims.create({
+                    key: "legs-walk",
+                    frames: this.anims.generateFrameNumbers("legsanimated", {
+                        frames: [1, 2, 3, 4]
+                    }),
+                    frameRate: 10,
+                    repeat: -1
+                });
+                
+                 this.anims.create({
+                    key: "legs-idle",
+                    frames: this.anims.generateFrameNumbers("legsanimated", {
+                        start: 0,
+                        end: 0
+                    }),
+                    frameRate: 10,
+                    repeat: -1
+                });
+            }
+            
+            isActionActive(actionName) 
+            {
+                const binding = this.actions[actionName];
+
+                if(binding.type === "KEY") 
+                {
+                    return this.keys[actionName].isDown;
+                }
+
+                if(binding.type === "MOUSE") 
+                {
+                    const pointer = this.input.activePointer;
+                    
+                    let isDown = false;
+                    if(binding.button === 0) isDown = pointer.leftButtonDown();
+                    else if(binding.button === 1) isDown = pointer.middleButtonDown();
+                    else if(binding.button === 2) isDown = pointer.rightButtonDown();
+
+                    if(isDown) 
+                    {
+                        if(binding.button === 0 && this.leftMouseTimeStamp === 0) this.leftMouseTimeStamp = this.time.now;
+                        else if(binding.button === 1 && this.middleMouseTimeStamp === 0) this.middleMouseTimeStamp = this.time.now;
+                        else if(binding.button === 2 && this.rightMouseTimeStamp === 0) this.rightMouseTimeStamp = this.time.now;                        
+                    } 
+                    else 
+                    {
+                        if(binding.button === 0) this.leftMouseTimeStamp = 0;
+                        else if(binding.button === 1) this.middleMouseTimeStamp = 0;
+                        else if(binding.button === 2) this.rightMouseTimeStamp = 0;           
+                    }
+                    
+                    return isDown;
+                }
+
+                return false;
+            }
+            
+            refreshControls() 
+            {
+                if(this.keys) 
+                {
+                    for(let action in this.keys) 
+                    {
+                        this.input.keyboard.removeKey(this.keys[action]);
+                    }
+                }
+
+                this.keys = {};
+
+                for(let action in this.actions) 
+                {
+                    if(this.actions[action].type === "KEY") 
+                    {
+                        this.keys[action] = this.input.keyboard.addKey(this.actions[action].code);
+                    }
+                }
+            }
+        }
+    
+        class Level1 extends Phaser.Scene
+        {
+            constructor()
+            {
+              super({key: "Level1"});
+            }
+
+            preload()
+            {
+                
+            }
+
+            create ()
+            {
+                this.input.setDefaultCursor("");
+                const worldWidthX = 1800;
+                this.physics.world.setBounds(0, 0, worldWidthX, 143);
+                this.cursors = this.input.keyboard.createCursorKeys();
+                this.gameManager = game.scene.getScene("GameManager");
+                
+                this.sky = this.add.tileSprite(0, 128, 1800, 143, "sky").setOrigin(0, 1);
+
+                this.floor = this.add.tileSprite(0, 128, 1800, 16, "grass").setOrigin(0, 1);
+                this.physics.add.existing(this.floor, true);
+                this.physics.add.existing(this.floor, true);
+                
+                this.player = createPlayer(this);
+
+                if(this.player)
+                {
+                    this.physics.add.collider(this.player, this.floor);
+                }
+                
+                this.cameras.main.setBounds(0, 0, worldWidthX, 128);
+                this.cameras.main.startFollow(this.player, true, 1, 1, -(this.sys.game.config.width / 2) + 24, this.sys.game.config.height / 2);
+                this.cameras.main.setZoom(1);
+                this.cameras.scrollX = 0;
+                this.cameras.scrollY = 0;
+            }
+            
+            update(time, delta)
+            {
+                
+            }
+        }
+        function createText(scene, x, y, words, size, color)
+        {
+            let newText = scene.add.text(x, y, words, { fontFamily: "hcfont", fontSize: size, fill: color}).setOrigin(0.5, 0);
+            return newText;
+        }
+        
+        function canPlayAudio(scene)
+        {
+            if(scene.sound.context.state === "running" )
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        
+        function checkStorage()
+        {
+            var test = "test";
+    
+            try 
+            {
+                localStorage.setItem(test, test);
+                localStorage.removeItem(test);
+                return true;
+            } 
+            catch(e)
+            {
+                return false;
+            }
+        }
+        
+        document.addEventListener("contextmenu", event => 
+        {
+            event.preventDefault();
+            return false;
+        });
+  
+        const config =
+        {
+            type: Phaser.AUTO,
+            pixelArt: true,
+            width: 288,
+            height: 128,
+            
+            scale:
+            {
+              mode: Phaser.Scale.FIT,
+              autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+
+            physics:
+            {
+              default: "arcade",
+              arcade:
+              {
+                gravity: { y: 300 },
+                debug: false
+              }
+            },
+
+            scene:
+            [
+              Loading,
+              GameManager,
+              Level1
+            ]
+        };
+
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>
