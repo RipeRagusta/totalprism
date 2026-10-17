@@ -74,28 +74,81 @@ class Player extends Phaser.GameObjects.Container
         
         
         this.speed = 100;
-
-        this.torsoOffsets = 
-        [
-            { x: 8, y: 6 },   //idle
-            { x: 8, y: 6 },   //shootidle
-            { x: 8, y: 6 },   //blockidle
-            { x: 10, y: 5},  
-            { x: 10, y: 5},
-            { x: 11, y: 4 },
-            { x: 10, y: 3 },
-        ];
         
-        this.blockingWalkForwardOffsets =
-        [
-            { x: 8, y: 7 },   //idle
-            { x: 8, y: 7 },   //shootidle
-            { x: 8, y: 7 },   //blockidle
-            { x: 8, y: 6},  
-            { x: 8, y: 6},
-            { x: 9, y: 5 },
-            { x: 8, y: 4 },
-        ];
+        this.torsoOffsets = 
+        {
+            aimForward:
+            {
+                idle: 
+                {
+                    0: { x: 8, y: 6 }
+                },
+
+                walkRight:
+                {
+                    3: { x: 10, y: 5},  
+                    4: { x: 10, y: 5},
+                    5: { x: 11, y: 4 },
+                    6: { x: 10, y: 3 }
+                },
+                
+                walkLeft:
+                {
+                    3: { x: 10, y: 5},  
+                    4: { x: 10, y: 5},
+                    5: { x: 11, y: 4 },
+                    6: { x: 10, y: 3 }
+                }
+            },
+            block:
+            {
+                idle: 
+                {
+                    0: { x: 6, y: 7 }
+                },
+
+                walkRight:
+                {
+                    3: { x: 8, y: 6},  
+                    4: { x: 8, y: 6},
+                    5: { x: 9, y: 5 },
+                    6: { x: 8, y: 4 }
+                },
+                
+                walkLeft:
+                {
+                    3: { x: 8, y: 6},  
+                    4: { x: 8, y: 6},
+                    5: { x: 9, y: 5 },
+                    6: { x: 8, y: 4 }
+                }
+            },
+            pump:
+            {
+                idle: 
+                {
+                    0: { x: 8, y: 6 }
+                },
+
+                walkRight:
+                {
+                    3: { x: 10, y: 5},  
+                    4: { x: 10, y: 5},
+                    5: { x: 11, y: 4 },
+                    6: { x: 10, y: 3 }
+                },
+                
+                walkLeft:
+                {
+                    3: { x: 10, y: 5},  
+                    4: { x: 10, y: 5},
+                    5: { x: 11, y: 4 },
+                    6: { x: 10, y: 3 }
+                }
+            }
+        };
+        
+        
  
         
         this.lastPlayerShot = 0;
@@ -112,41 +165,13 @@ class Player extends Phaser.GameObjects.Container
     torsoUpdatePositionToLegs() 
     {
         const textureFrame = Number(this.legs.frame.name);
-
-        const offset = this.torsoOffsets[textureFrame];
-
-        if(offset) 
-        {
-            this.torso.setPosition(offset.x, offset.y);
-        }
+        const torsoOffsets = this.torsoOffsets[this.torsoState];
+        if (!torsoOffsets) return;
+        const offset = torsoOffsets[this.legState][textureFrame];
         
-        if(this.torsoState === "block")
-        {
-            if(this.legState === "idle")
-            {
-                this.torso.setPosition(6, 7);
-                
-                switch(this.torsoState)
-                {
-                    case "pump":
-                        break;
-                    case "aimforward":
-                        break;
-                    case "block":
-                        break;
-                }
-            }
-            else if(this.legState === "walkRight")
-            {
-                console.log("here");
-                const walkRightOffset = this.blockingWalkForwardOffsets[textureFrame];
-                
-                if(walkRightOffset) 
-                {
-                    this.torso.setPosition(walkRightOffset.x, walkRightOffset.y);
-                }
-            }
-        }
+        if (!offset) return;
+
+        this.torso.setPosition(offset.x, offset.y);
     }
 
     preUpdate(time, delta) 
@@ -164,7 +189,7 @@ class Player extends Phaser.GameObjects.Container
 
         if(this.gameManager.isActionActive("walkLeft")) 
         {
-            this.legState = "walfLeft";
+            this.legState = "walkLeft";
         } 
         else if(this.gameManager.isActionActive("walkRight"))
         {
@@ -184,10 +209,12 @@ class Player extends Phaser.GameObjects.Container
                 this.body.setVelocityX(this.speed);
                 this.legs.play("legs-walk", true);
                 break;
+                
             case "walkLeft":
                 this.body.setVelocityX(-this.speed);
                 this.legs.play("legs-walk", true);
                 break;
+                
             case "idle":
                 this.body.setVelocityX(0);
                 this.legs.play("legs-idle", true);
@@ -199,7 +226,7 @@ class Player extends Phaser.GameObjects.Container
     {
         switch(torsoState)
         {
-            case "aimforward":
+            case "aimForward":
                 this.torso.setFrame(0);
                 break;
                 
@@ -221,7 +248,11 @@ class Player extends Phaser.GameObjects.Container
             
             this.torsoState = "pump";
             this.lastPlayerShot = time;
-            return;
+
+        }
+        else if(time > this.lastPlayerShot + this.fireRate)
+        {
+                this.torsoState = "aimForward";
         }
         
         if(this.gameManager.isActionActive("block") && time > this.lastPlayerBlock + this.blockRate)
@@ -230,9 +261,6 @@ class Player extends Phaser.GameObjects.Container
             return;
         }        
         
-        if(time > this.lastPlayerShot + this.fireRate)
-        {
-            this.torsoState = "aimforward";
-        }
+        
     }
 }
