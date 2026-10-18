@@ -11,7 +11,8 @@ function createLaunchCommands()
 		{ name: "genericinvitation", url: "../genericinvitation/invitation.html", display: false},
 		{ name: "genericad", url: "../genericad/digitalSignStart.html", display: false},
 		{ name: "seraphims", url: "https://seraphims.org/index.html", display: false},
-		{ name: "old", url: "../old/index.html", display: false},
+		{ name: "old", url: "../old/index.html", display: true},
+		{ name: "HC2", url: "../HC2/index.html", display: false},
 	];
 
 	launchTargets = JSON.parse(JSON.stringify(defaultLaunchTargets));
