@@ -3,16 +3,19 @@ function createLaunchCommands()
 	defaultLaunchTargets = 
 	[
 		{ name: "cyberclicker2101", url: "../cyberclicker2101/index.html", display: true},
-		{ name: "flesh", url: "https://flesh.enterprises/index.html", display: false},
-		{ name: "fp", url: "../fp/index.html", display: false},
+		{ name: "flesh", url: "https://flesh.enterprises/index.html", display: true},
+		{ name: "fleshphotogprahy", url: "../fleshphotogprahy/index.html", display: true},
 		{ name: "housecall", url: "../housecall/index.html", display: true},
 		{ name: "jumpgame", url: "../jumpgame/index.html", display: true},
-		{ name: "ragusta", url: "https://ragusta.com/index.html", display: false},
-		{ name: "genericinvitation", url: "../genericinvitation/invitation.html", display: false},
-		{ name: "genericad", url: "../genericad/digitalSignStart.html", display: false},
-		{ name: "seraphims", url: "https://seraphims.org/index.html", display: false},
+		{ name: "ragusta", url: "https://ragusta.com/index.html", display: true},
+		{ name: "genericinvitation", url: "../genericinvitation/invitation.html", display: true},
+		{ name: "genericad", url: "../genericad/digitalSignStart.html", display: true},
+		{ name: "seraphims", url: "https://seraphims.org/index.html", display: true},
 		{ name: "old", url: "../old/index.html", display: true},
-		{ name: "hc2", url: "../hc2/index.html", display: false},
+		{ name: "housecall2", url: "../housecall2/index.html", display: true},
+		{ name: "follower", url: "../follower/index.html", display: true},
+		{ name: "cybercide", url: "../cybercide/index.html", display: true},
+		{ name: "redman", url: "../redman/index.html", display: true},
 	];
 
 	launchTargets = JSON.parse(JSON.stringify(defaultLaunchTargets));
