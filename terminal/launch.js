@@ -4,7 +4,7 @@ function createLaunchCommands()
 	[
 		{ name: "cyberclicker2101", url: "../cyberclicker2101/index.html", display: true},
 		{ name: "flesh", url: "https://flesh.enterprises/index.html", display: true},
-		{ name: "fleshphotogprahy", url: "../fleshphotogprahy/index.html", display: true},
+		{ name: "fleshphotography", url: "../fleshphotography/index.html", display: true},
 		{ name: "housecall", url: "../housecall/index.html", display: true},
 		{ name: "jumpgame", url: "../jumpgame/index.html", display: true},
 		{ name: "ragusta", url: "https://ragusta.com/index.html", display: true},
