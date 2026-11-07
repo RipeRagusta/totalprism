@@ -36,7 +36,7 @@
 
             preload()
             {
-                this.load.spritesheet("player", "./assets/cyberguy.png", {frameWidth: 16, frameHeight: 16});
+                this.load.spritesheet("player", "./assets/cyberguy.png", {frameWidth: 16, frameHeight: 17});
                 this.load.image("sky", "./assets/sky.png");
                 this.load.image("ground", "./assets/ground.png");
                 this.load.image("brick", "./assets/brick.png");
@@ -90,7 +90,7 @@
                 
                 this.brick = this.add.tileSprite(0, 90, 1800, 180, "sky").setOrigin(0, 1).setScrollFactor(0.6);
                 
-                this.floor = this.add.tileSprite(0, 90, 1800, 16, "ground").setOrigin(0, 1);
+                this.floor = this.add.tileSprite(0, 90, 1800, 16, "sky").setOrigin(0, 1);
                 this.physics.add.existing(this.floor, true);
                 
                 this.player = createPlayer(this);
