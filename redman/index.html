@@ -38,7 +38,7 @@
             {
                 this.load.image("redman", "./assets/redman.png");
                 this.load.image("ground", "./assets/ground.png");
-                this.load.image("sky", "./assets/sky.png");
+                this.load.image("sky", "./assets/space.png");
             }
 
             create()
@@ -66,6 +66,19 @@
             }
         }
         
+        function createPlatform(scene, x, y, width, height, color) 
+        {
+            let platform = scene.add.rectangle(x, y, width, height, color).setOrigin(0, 0);
+            scene.physics.add.existing(platform, true);
+            
+            if(scene.player)
+            {
+                scene.physics.add.collider(scene.player, platform);
+            }
+            
+            return platform;
+        }
+        
     
         class Level1 extends Phaser.Scene
         {
@@ -86,20 +99,32 @@
                 this.physics.world.setBounds(0, 0, worldWidthX, 176);
                 this.cursors = this.input.keyboard.createCursorKeys();
                 
-                this.sky = this.add.tileSprite(0, 90, 1800, 180, "sky").setOrigin(0, 1);
+                this.sky = this.add.tileSprite(0, 90, 1800, 180, "sky").setOrigin(0, 1).setScrollFactor(0.25);
                 
-                this.floor = this.add.tileSprite(0, 90, 1800, 16, "ground").setOrigin(0, 1);
-                this.physics.add.existing(this.floor, true);
+                
                 
                 this.player = createPlayer(this);
+                createPlatform(this, 0, 80, 100, 16, "0x00ffff");
+                createPlatform(this, 120, 80, 100, 16, "0x00ffff");
+                createPlatform(this, 250, 70, 100, 8, "0xff0000");
+                
+                
+                
+                
+                
+                //this.floor = this.add.tileSprite(0, 90, 1800, 16, "ground").setOrigin(0, 1);
+                /*this.physics.add.existing(this.floor, true);
+                
+                
 
                 if(this.player)
                 {
                     this.physics.add.collider(this.player, this.floor);
-                }
+                }*/
                 
                 this.cameras.main.setBounds(0, 0, worldWidthX, 176);
-                this.cameras.main.startFollow(this.player, true, 1, 1, 0, this.sys.game.config.height / 2);
+                this.cameras.main.startFollow(this.player, true, 1, 1, -this.scale.width * 0.1, this.scale.height * 0.1);
+                this.cameras.main.setDeadzone(0, 32);
                 this.cameras.main.setZoom(1);
                 this.cameras.scrollX = 0;
                 this.cameras.scrollY = 0;
